@@ -1,8 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net.Cache;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using XamlAnimatedGif;
 
 namespace BViewer
@@ -43,15 +46,7 @@ namespace BViewer
                 if (!Utils.ComparePaths(CurrentDirectory, value))
                 {
                     _currentDirectory = value;
-                    Files = Directory.EnumerateFiles(CurrentDirectory, "*.*", SearchOption.TopDirectoryOnly)
-                        .Where(s => s.EndsWith(".png",  StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".bmp",  StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".jpg",  StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".tif",  StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".tga",  StringComparison.OrdinalIgnoreCase))
-                        .ToArray();
+                    BuildFileArray();
                     CurrentFileIndex = Array.FindIndex(Files, (f) => Utils.ComparePaths(f, CurrentFile));
                 }
             }
@@ -69,9 +64,19 @@ namespace BViewer
             set
             {
                 _currentFileIndex = ((value % Files.Length) + Files.Length) % Files.Length;
-                ShowImage(Files[CurrentFileIndex]);
+                if (File.Exists(Files[CurrentFileIndex]))
+                {
+                    ShowImage(Files[CurrentFileIndex]);
+                }
+                else
+                {
+                    Files[CurrentFileIndex] = null;
+                    CurrentFileIndex += NextImageDirection;
+                }
             }
         }
+
+        private int NextImageDirection { get; set; }
 
         private bool _fullscreen;
         public bool Fullscreen
@@ -98,25 +103,69 @@ namespace BViewer
             CurrentFile = path;
         }
 
+        private void BuildFileArray()
+        {
+            Files = Directory.EnumerateFiles(CurrentDirectory, "*.*", SearchOption.TopDirectoryOnly)
+                        .Where(s => s.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                                 || s.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase)
+                                 || s.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                 || s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                 || s.EndsWith(".tif", StringComparison.OrdinalIgnoreCase)
+                                 || s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)
+                                 || s.EndsWith(".tga", StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+        }
+
         private void ShowImage(string path)
         {
             Uri uri = new Uri(path);
-            AnimationBehavior.SetSourceUri(image, uri);
-            string directory = System.IO.Path.GetDirectoryName(path);
+            if (!path.EndsWith(".gif"))
+            {
+                BitmapImage bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.UriSource = uri;
+                bitmapImage.EndInit();
+                image.Source = bitmapImage;
+            }
+            else
+            {
+                AnimationBehavior.SetSourceUri(image, uri);
+            }
+            
+            string directory = Path.GetDirectoryName(path);
             if (CurrentDirectory.Length == 0 || CurrentDirectory.SequenceEqual(directory))
             {
                 CurrentDirectory = directory;
             }
-            Application.Current.MainWindow.Title = $"{System.IO.Path.GetFileName(path)} ({CurrentDirectory}) - BViewer";
+            Application.Current.MainWindow.Title = $"{Path.GetFileName(path)} ({CurrentDirectory}) - BViewer";
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Left:
+                    Previous(null, null);
+                    break;
+                case Key.Right:
+                    Next(null, null);
+                    break;
+                case Key.F10:
+                    ToggleFullscreen();
+                    break;
+            }
         }
 
         private void Next(object sender, RoutedEventArgs e)
         {
+            NextImageDirection = 1;
             CurrentFileIndex++;
         }
 
         private void Previous(object sender, RoutedEventArgs e)
         {
+            NextImageDirection = -1;
             CurrentFileIndex--;
         }
 

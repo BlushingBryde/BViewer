@@ -31,7 +31,6 @@ namespace BViewer
                 if (File.Exists(value))
                 {
                     _currentFile = value;
-                    Console.WriteLine(value);
                     CurrentDirectory = Path.GetDirectoryName(CurrentFile);
                 }
             }
@@ -49,11 +48,7 @@ namespace BViewer
                 if (!Utils.ComparePaths(CurrentDirectory, value))
                 {
                     _currentDirectory = value;
-                    Console.WriteLine(value);
-                    /*if (!File.Exists(CurrentFile) || Files == null)*/
-                    {
-                        BuildFileArray();
-                    }
+                    BuildFileArray();
                     CurrentFileIndex = Array.FindIndex(Files, (f) => Utils.ComparePaths(f, CurrentFile));
                 }
             }
@@ -138,7 +133,11 @@ namespace BViewer
             InitializeComponent();
 
             image = FindName("Image") as Image;
-            CurrentFile = path;
+
+            if (File.Exists(path))
+            {
+                CurrentFile = path;
+            }
 
             SlideshowTimer = new DispatcherTimer();
             SlideshowTimer.Tick += new EventHandler((sender, e) => NextCommand_Executed(null, null));

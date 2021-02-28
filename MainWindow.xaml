@@ -14,7 +14,6 @@
 			<RowDefinition Height="40"/>
 		</Grid.RowDefinitions>
 		<Image x:Name="Image"
-			   gif:AnimationBehavior.SourceUri="D:/Pictures/dicc.jpg"
 			   gif:AnimationBehavior.RepeatBehavior="Forever" StretchDirection="DownOnly"/>
 		<Grid Grid.Row="1" Background="#111111" HorizontalAlignment="Center">
 			<Grid.ColumnDefinitions>

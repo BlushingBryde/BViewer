@@ -93,6 +93,8 @@ namespace BViewer
             }
         }
 
+        private FileStream Stream { get; set; }
+
         public MainWindow() : this("") { }
 
         public MainWindow(string path)
@@ -112,26 +114,16 @@ namespace BViewer
                                  || s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
                                  || s.EndsWith(".tif", StringComparison.OrdinalIgnoreCase)
                                  || s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".tga", StringComparison.OrdinalIgnoreCase))
+                                 || s.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
+                                 || s.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
                         .ToArray();
         }
 
         private void ShowImage(string path)
         {
-            Uri uri = new Uri(path);
-            if (!path.EndsWith(".gif"))
-            {
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.UriSource = uri;
-                bitmapImage.EndInit();
-                image.Source = bitmapImage;
-            }
-            else
-            {
-                AnimationBehavior.SetSourceUri(image, uri);
-            }
+            Stream?.Dispose();
+            Stream = new FileStream(path, FileMode.Open);
+            AnimationBehavior.SetSourceStream(image, Stream);
             
             string directory = Path.GetDirectoryName(path);
             if (CurrentDirectory.Length == 0 || CurrentDirectory.SequenceEqual(directory))

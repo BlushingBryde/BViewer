@@ -31,6 +31,7 @@ namespace BViewer
                 if (File.Exists(value))
                 {
                     _currentFile = value;
+                    Console.WriteLine(value);
                     CurrentDirectory = Path.GetDirectoryName(CurrentFile);
                 }
             }
@@ -48,7 +49,8 @@ namespace BViewer
                 if (!Utils.ComparePaths(CurrentDirectory, value))
                 {
                     _currentDirectory = value;
-                    if (!File.Exists(CurrentFile) || Files == null)
+                    Console.WriteLine(value);
+                    /*if (!File.Exists(CurrentFile) || Files == null)*/
                     {
                         BuildFileArray();
                     }

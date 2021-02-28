@@ -23,5 +23,10 @@ namespace BViewer
                 return false;
             }
         }
+
+        public static bool IsTrue(this bool? b)
+        {
+            return b == null ? true : false;
+        }
     }
 }

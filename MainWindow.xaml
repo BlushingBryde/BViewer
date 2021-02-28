@@ -5,27 +5,47 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BViewer"
 		xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800"
-		KeyDown="Window_KeyDown">
+        Title="MainWindow" Height="450" Width="800">
+    <Window.CommandBindings>
+        <CommandBinding Command="local:CustomCommands.Next" Executed="NextCommand_Executed" CanExecute="NextCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Previous" Executed="PreviousCommand_Executed" CanExecute="PreviousCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Fullscreen" Executed="FullscreenCommand_Executed" CanExecute="FullscreenCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.ExitSlideshow" Executed="ExitSlideshowCommand_Executed" CanExecute="ExitSlideshowCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.PlayPause" Executed="PlayPauseCommand_Executed" CanExecute="PlayPauseCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Shuffle" Executed="ShuffleCommand_Executed" CanExecute="ShuffleCommand_CanExecute"/>
+    </Window.CommandBindings>
 	<Grid Background="#222222">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="1*"/>
 			<RowDefinition Height="40"/>
 		</Grid.RowDefinitions>
-		<Image x:Name="Image"
-			   gif:AnimationBehavior.RepeatBehavior="Forever" StretchDirection="DownOnly"/>
-		<Grid Grid.Row="1" Background="#111111" HorizontalAlignment="Center">
+        <Image x:Name="Image"
+			   gif:AnimationBehavior.RepeatBehavior="Forever" StretchDirection="DownOnly">
+            <Image.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Play"/>
+                    <Separator/>
+                    <MenuItem Header="Slow"/>
+                </ContextMenu>
+            </Image.ContextMenu>
+        </Image>
+        <Grid Grid.Row="1" Background="#111111" HorizontalAlignment="Center">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="40"/>
-				<ColumnDefinition Width="40"/>
-				<ColumnDefinition Width="40"/>
-				<ColumnDefinition Width="40"/>
-				<ColumnDefinition Width="40"/>
-				<ColumnDefinition Width="40"/>
-				<ColumnDefinition Width="40"/>
-				<ColumnDefinition Width="40"/>
-			</Grid.ColumnDefinitions>
+				<ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="40"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="ButtonPrevious" Grid.Column="0" Command="local:CustomCommands.Previous" Background="Transparent">
+                <iconPacks:PackIconMaterial Kind="ArrowLeft" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
+            </Button>
+            <Button x:Name="ButtonFullscreen" Grid.Column="1" Command="local:CustomCommands.Fullscreen" Background="Transparent">
+                <iconPacks:PackIconMaterial Kind="Fullscreen" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
+            </Button>
+            <Button x:Name="ButtonNext" Grid.Column="2" Command="local:CustomCommands.Next" Background="Transparent">
+                <iconPacks:PackIconMaterial Kind="ArrowRight" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
+            </Button>
 		</Grid>
 	</Grid>
 </Window>

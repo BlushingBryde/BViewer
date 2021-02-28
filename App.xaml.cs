@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using BViewer.Properties;
+using System.Configuration;
+using System.IO;
 using System.Windows;
 
 namespace BViewer
@@ -23,6 +25,11 @@ namespace BViewer
             }
 
             mainWindow.Show();
+        }
+
+        private void OnExit(object sender, ExitEventArgs e)
+        {
+            Settings.Default.Save();
         }
     }
 }

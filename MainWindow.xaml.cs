@@ -1,12 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Net.Cache;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using XamlAnimatedGif;
+using BViewer.Properties;
 
 namespace BViewer
 {
@@ -46,7 +45,10 @@ namespace BViewer
                 if (!Utils.ComparePaths(CurrentDirectory, value))
                 {
                     _currentDirectory = value;
-                    BuildFileArray();
+                    if (!File.Exists(CurrentFile) || Files == null)
+                    {
+                        BuildFileArray();
+                    }
                     CurrentFileIndex = Array.FindIndex(Files, (f) => Utils.ComparePaths(f, CurrentFile));
                 }
             }
@@ -93,6 +95,19 @@ namespace BViewer
             }
         }
 
+        private bool _isPlaying;
+        public bool IsPlaying
+        {
+            get
+            {
+                return _isPlaying;
+            }
+            set
+            {
+                _isPlaying = value;
+            }
+        }
+
         private FileStream Stream { get; set; }
 
         public MainWindow() : this("") { }
@@ -100,14 +115,19 @@ namespace BViewer
         public MainWindow(string path)
         {
             InitializeComponent();
+            InitializeSettings();
 
             image = FindName("Image") as Image;
             CurrentFile = path;
         }
 
+        private void InitializeSettings()
+        {
+        }
+
         private void BuildFileArray()
         {
-            Files = Directory.EnumerateFiles(CurrentDirectory, "*.*", SearchOption.TopDirectoryOnly)
+            var fileCollection = Directory.EnumerateFiles(CurrentDirectory, "*.*", SearchOption.TopDirectoryOnly)
                         .Where(s => s.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
                                  || s.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase)
                                  || s.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
@@ -115,8 +135,15 @@ namespace BViewer
                                  || s.EndsWith(".tif", StringComparison.OrdinalIgnoreCase)
                                  || s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)
                                  || s.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
-                                 || s.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
-                        .ToArray();
+                                 || s.EndsWith(".gif", StringComparison.OrdinalIgnoreCase));
+
+            if ((bool)Settings.Default["Shuffle"])
+            {
+                Random random = new Random();
+                fileCollection.OrderBy(c => random.Next());
+            }
+
+            Files = fileCollection.ToArray();
         }
 
         private void ShowImage(string path)
@@ -124,7 +151,7 @@ namespace BViewer
             Stream?.Dispose();
             Stream = new FileStream(path, FileMode.Open);
             AnimationBehavior.SetSourceStream(image, Stream);
-            
+
             string directory = Path.GetDirectoryName(path);
             if (CurrentDirectory.Length == 0 || CurrentDirectory.SequenceEqual(directory))
             {
@@ -133,42 +160,116 @@ namespace BViewer
             Application.Current.MainWindow.Title = $"{Path.GetFileName(path)} ({CurrentDirectory}) - BViewer";
         }
 
-        private void Window_KeyDown(object sender, KeyEventArgs e)
+        private void ToggleFullscreen()
         {
-            switch (e.Key)
-            {
-                case Key.Left:
-                    Previous(null, null);
-                    break;
-                case Key.Right:
-                    Next(null, null);
-                    break;
-                case Key.F10:
-                    ToggleFullscreen();
-                    break;
-            }
+            Fullscreen = !Fullscreen;
+        }
+        
+        private void FullscreenButton_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleFullscreen();
         }
 
-        private void Next(object sender, RoutedEventArgs e)
+        private void NextCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void NextCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             NextImageDirection = 1;
             CurrentFileIndex++;
         }
 
-        private void Previous(object sender, RoutedEventArgs e)
+        private void PreviousCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void PreviousCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             NextImageDirection = -1;
             CurrentFileIndex--;
         }
 
-        private void ToggleFullscreen()
+        private void FullscreenCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void FullscreenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             Fullscreen = !Fullscreen;
         }
 
-        private void FullscreenButton_Click(object sender, RoutedEventArgs e)
+        private void ExitSlideshowCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            ToggleFullscreen();
+            e.CanExecute = Fullscreen;
         }
+
+        private void ExitSlideshowCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            Fullscreen = false;
+        }
+
+        private void PlayPauseCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Fullscreen;
+        }
+
+        private void PlayPauseCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            IsPlaying = !IsPlaying;
+        }
+
+        private void ShuffleCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void ShuffleCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            Settings.Default["Shuffle"] = !(bool)Settings.Default["Shuffle"];
+            BuildFileArray();
+        }
+    }
+
+    public static class CustomCommands
+    {
+        public static readonly RoutedUICommand Next = new RoutedUICommand(
+            "Next",
+            "Next",
+            typeof(CustomCommands),
+            new InputGestureCollection { new KeyGesture(Key.Right) });
+
+        public static readonly RoutedUICommand Previous = new RoutedUICommand(
+            "Previous",
+            "Previous",
+            typeof(CustomCommands),
+            new InputGestureCollection { new KeyGesture(Key.Left) });
+
+        public static readonly RoutedUICommand Fullscreen = new RoutedUICommand(
+            "Fullscreen",
+            "Fullscreen",
+            typeof(CustomCommands),
+            new InputGestureCollection { new KeyGesture(Key.F5) });
+
+        public static readonly RoutedUICommand ExitSlideshow = new RoutedUICommand(
+            "ExitSlideshow",
+            "ExitSlideshow",
+            typeof(CustomCommands),
+            new InputGestureCollection { new KeyGesture(Key.Escape) });
+
+        public static readonly RoutedUICommand PlayPause = new RoutedUICommand(
+            "PlayPause",
+            "PlayPause",
+            typeof(CustomCommands),
+            new InputGestureCollection { new KeyGesture(Key.Space) });
+
+        public static readonly RoutedUICommand Shuffle = new RoutedUICommand(
+            "Shuffle",
+            "Shuffle",
+            typeof(CustomCommands)/*,
+            new InputGestureCollection { new KeyGesture(Key.S) }*/);
     }
 }

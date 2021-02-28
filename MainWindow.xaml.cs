@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using XamlAnimatedGif;
 using BViewer.Properties;
+using System.Windows.Threading;
 
 namespace BViewer
 {
@@ -66,6 +67,7 @@ namespace BViewer
             set
             {
                 _currentFileIndex = ((value % Files.Length) + Files.Length) % Files.Length;
+
                 if (File.Exists(Files[CurrentFileIndex]))
                 {
                     ShowImage(Files[CurrentFileIndex]);
@@ -74,6 +76,12 @@ namespace BViewer
                 {
                     Files[CurrentFileIndex] = null;
                     CurrentFileIndex += NextImageDirection;
+                }
+
+                if (Fullscreen && Settings.Default.IsPlaying)
+                {
+                    SlideshowTimer.Stop();
+                    SlideshowTimer.Start();
                 }
             }
         }
@@ -90,39 +98,47 @@ namespace BViewer
             set
             {
                 _fullscreen = value;
+
                 WindowStyle = Fullscreen ? WindowStyle.None : WindowStyle.SingleBorderWindow;
                 WindowState = Fullscreen ? WindowState.Maximized : WindowState.Normal;
-            }
-        }
 
-        private bool _isPlaying;
-        public bool IsPlaying
-        {
-            get
-            {
-                return _isPlaying;
-            }
-            set
-            {
-                _isPlaying = value;
+                ContextMenu context = FindName("Context") as ContextMenu;
+                context.IsOpen = false;
+                context.IsEnabled = Fullscreen;
+                context.Visibility = Fullscreen ? Visibility.Visible : Visibility.Hidden;
+
+                if (Fullscreen)
+                {
+                    SlideshowTimer.Stop();
+                    UpdateSpeed();
+                    if (Settings.Default.IsPlaying)
+                    {
+                        SlideshowTimer.Start();
+                    }
+                }
+                else
+                {
+                    SlideshowTimer.Stop();
+                }
             }
         }
 
         private FileStream Stream { get; set; }
+
+        private DispatcherTimer SlideshowTimer { get; set; }
 
         public MainWindow() : this("") { }
 
         public MainWindow(string path)
         {
             InitializeComponent();
-            InitializeSettings();
 
             image = FindName("Image") as Image;
             CurrentFile = path;
-        }
 
-        private void InitializeSettings()
-        {
+            SlideshowTimer = new DispatcherTimer();
+            SlideshowTimer.Tick += new EventHandler((sender, e) => NextCommand_Executed(null, null));
+            UpdateSpeed();
         }
 
         private void BuildFileArray()
@@ -137,10 +153,10 @@ namespace BViewer
                                  || s.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
                                  || s.EndsWith(".gif", StringComparison.OrdinalIgnoreCase));
 
-            if ((bool)Settings.Default["Shuffle"])
+            if (Settings.Default.Shuffle)
             {
                 Random random = new Random();
-                fileCollection.OrderBy(c => random.Next());
+                fileCollection = fileCollection.OrderBy(c => random.Next());
             }
 
             Files = fileCollection.ToArray();
@@ -219,7 +235,7 @@ namespace BViewer
 
         private void PlayPauseCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            IsPlaying = !IsPlaying;
+            Settings.Default.IsPlaying = !Settings.Default.IsPlaying;
         }
 
         private void ShuffleCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -229,8 +245,31 @@ namespace BViewer
 
         private void ShuffleCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            Settings.Default["Shuffle"] = !(bool)Settings.Default["Shuffle"];
+            Settings.Default.Shuffle = !Settings.Default.Shuffle;
             BuildFileArray();
+        }
+
+        private void SpeedCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Fullscreen;
+        }
+
+        private void SpeedCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            SpeedPrompt dialog = new SpeedPrompt();
+            dialog.Owner = this;
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult == true)
+            {
+                UpdateSpeed();
+            }
+        }
+
+        private void UpdateSpeed()
+        {
+            (FindName("ContextSpeed") as MenuItem).Header = $"Set Interval ({Settings.Default.Speed} seconds)...";
+            SlideshowTimer.Interval = new TimeSpan(0, 0, Settings.Default.Speed);
         }
     }
 
@@ -269,7 +308,11 @@ namespace BViewer
         public static readonly RoutedUICommand Shuffle = new RoutedUICommand(
             "Shuffle",
             "Shuffle",
-            typeof(CustomCommands)/*,
-            new InputGestureCollection { new KeyGesture(Key.S) }*/);
+            typeof(CustomCommands));
+
+        public static readonly RoutedUICommand Speed = new RoutedUICommand(
+            "Speed",
+            "Speed",
+            typeof(CustomCommands));
     }
 }

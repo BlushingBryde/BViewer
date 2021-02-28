@@ -15,6 +15,7 @@
         <CommandBinding Command="local:CustomCommands.ExitSlideshow" Executed="ExitSlideshowCommand_Executed" CanExecute="ExitSlideshowCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.PlayPause" Executed="PlayPauseCommand_Executed" CanExecute="PlayPauseCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Shuffle" Executed="ShuffleCommand_Executed" CanExecute="ShuffleCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Speed" Executed="SpeedCommand_Executed" CanExecute="SpeedCommand_CanExecute"/>
     </Window.CommandBindings>
 	<Grid Background="#222222">
 		<Grid.RowDefinitions>
@@ -24,10 +25,10 @@
         <Image x:Name="Image"
 			   gif:AnimationBehavior.RepeatBehavior="Forever" StretchDirection="DownOnly">
             <Image.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Play"/>
+                <ContextMenu x:Name="Context" IsEnabled="False" Visibility="Hidden">
+                    <MenuItem x:Name="ContextPlayPause" Header="Pause" Command="local:CustomCommands.PlayPause"/>
                     <Separator/>
-                    <MenuItem Header="Slow"/>
+                    <MenuItem x:Name="ContextSpeed" Header="Set Interval (5 seconds)..." Command="local:CustomCommands.Speed"/>
                 </ContextMenu>
             </Image.ContextMenu>
         </Image>

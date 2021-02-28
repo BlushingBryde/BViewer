@@ -16,6 +16,7 @@
         <CommandBinding Command="local:CustomCommands.PlayPause" Executed="PlayPauseCommand_Executed" CanExecute="PlayPauseCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Shuffle" Executed="ShuffleCommand_Executed" CanExecute="ShuffleCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Speed" Executed="SpeedCommand_Executed" CanExecute="SpeedCommand_CanExecute"/>
+        <CommandBinding Command="ApplicationCommands.Open" Executed="OpenCommand_Executed" CanExecute="OpenCommand_CanExecute"/>
     </Window.CommandBindings>
 	<Grid Background="#222222">
 		<Grid.RowDefinitions>
@@ -34,18 +35,27 @@
         </Image>
         <Grid Grid.Row="1" Background="#111111" HorizontalAlignment="Center">
 			<Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="40"/>
 				<ColumnDefinition Width="40"/>
 				<ColumnDefinition Width="80"/>
                 <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="40"/>
             </Grid.ColumnDefinitions>
-            <Button x:Name="ButtonPrevious" Grid.Column="0" Command="local:CustomCommands.Previous" Background="Transparent">
+            <Button x:Name="ButtonOpen" Grid.Column="0" Command="ApplicationCommands.Open" Background="Transparent">
+                <iconPacks:PackIconMaterial Kind="OpenInApp" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
+            </Button>
+            <Button x:Name="ButtonPrevious" Grid.Column="2" Command="local:CustomCommands.Previous" Background="Transparent">
                 <iconPacks:PackIconMaterial Kind="ArrowLeft" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
             </Button>
-            <Button x:Name="ButtonFullscreen" Grid.Column="1" Command="local:CustomCommands.Fullscreen" Background="Transparent">
-                <iconPacks:PackIconMaterial Kind="Fullscreen" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
+            <Button x:Name="ButtonFullscreen" Grid.Column="3" Command="local:CustomCommands.Fullscreen" Background="Transparent">
+                <iconPacks:PackIconMaterial Kind="Presentation" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
             </Button>
-            <Button x:Name="ButtonNext" Grid.Column="2" Command="local:CustomCommands.Next" Background="Transparent">
+            <Button x:Name="ButtonNext" Grid.Column="4" Command="local:CustomCommands.Next" Background="Transparent">
                 <iconPacks:PackIconMaterial Kind="ArrowRight" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
+            </Button>
+            <Button x:Name="ButtonShuffle" Grid.Column="5" Command="local:CustomCommands.Shuffle" Background="Transparent">
+                <iconPacks:PackIconMaterial x:Name="ShuffleIcon" Kind="Shuffle" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#303030"/>
             </Button>
 		</Grid>
 	</Grid>

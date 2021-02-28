@@ -7,6 +7,8 @@ using System.Windows.Input;
 using XamlAnimatedGif;
 using BViewer.Properties;
 using System.Windows.Threading;
+using System.Windows.Media;
+using Microsoft.Win32;
 
 namespace BViewer
 {
@@ -139,6 +141,8 @@ namespace BViewer
             SlideshowTimer = new DispatcherTimer();
             SlideshowTimer.Tick += new EventHandler((sender, e) => NextCommand_Executed(null, null));
             UpdateSpeed();
+
+            UpdateShuffleButton();
         }
 
         private void BuildFileArray()
@@ -184,6 +188,21 @@ namespace BViewer
         private void FullscreenButton_Click(object sender, RoutedEventArgs e)
         {
             ToggleFullscreen();
+        }
+
+        private void OpenCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void OpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Filter = "Image files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.tga)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.tga";
+            if (dialog.ShowDialog() == true)
+            {
+                CurrentFile = dialog.FileName;
+            }
         }
 
         private void NextCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -236,6 +255,15 @@ namespace BViewer
         private void PlayPauseCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             Settings.Default.IsPlaying = !Settings.Default.IsPlaying;
+            if (Settings.Default.IsPlaying)
+            {
+                SlideshowTimer.Start();
+            }
+            else
+            {
+                SlideshowTimer.Stop();
+            }
+            ContextPlayPause.Header = Settings.Default.IsPlaying ? "Pause" : "Play";
         }
 
         private void ShuffleCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -246,7 +274,10 @@ namespace BViewer
         private void ShuffleCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             Settings.Default.Shuffle = !Settings.Default.Shuffle;
+            string file = Files[CurrentFileIndex];
             BuildFileArray();
+            CurrentFileIndex = Array.FindIndex(Files, (f) => Utils.ComparePaths(f, file));
+            UpdateShuffleButton();
         }
 
         private void SpeedCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -268,8 +299,13 @@ namespace BViewer
 
         private void UpdateSpeed()
         {
-            (FindName("ContextSpeed") as MenuItem).Header = $"Set Interval ({Settings.Default.Speed} seconds)...";
+            ContextSpeed.Header = $"Set Interval ({Settings.Default.Speed} second(s))...";
             SlideshowTimer.Interval = new TimeSpan(0, 0, Settings.Default.Speed);
+        }
+
+        private void UpdateShuffleButton()
+        {
+            ShuffleIcon.Foreground = Settings.Default.Shuffle ? Brushes.White : (SolidColorBrush)new BrushConverter().ConvertFrom("#303030");
         }
     }
 
